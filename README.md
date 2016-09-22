@@ -38,10 +38,20 @@ nf run node index.js
   - More human-friendly filtering and sorting
   - Better measurement of contrast for accessibility
 - [ ] Set up a schema for storing colors and/or sets of colors
+  - Convert color to each (of select) color spaces and store values separately to save future conversion time?
 - [ ] Flesh out the API endpoints for:
   - [ ] Uploading images to extract colors from
   - [ ] CRUD for colors
   - [ ] CRUD for color schemes (has many colors)
   - [ ] Comparing colors and/or color sets
+  - [ ] Blending colors?
   - [ ] Exporting color sets (for SCSS, SASS, Swift, etc.)
 - [ ] Make a sweet interface
+  - [ ] Visual representation of color schemes
+  - [ ] Searching for colors
+    - [ ] Filtering based on attributes of different color spaces
+    - [ ] Filtering based on accessibility contrast level
+  - [ ] Interface with controls for manipulating individual colors
+  - [ ] Dragging and dropping colors around the interface
+  - [ ] Google user log in?
+  - [ ] Social media sharing?
