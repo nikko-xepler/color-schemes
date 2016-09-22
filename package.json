@@ -24,6 +24,7 @@
   },
   "homepage": "https://github.com/nikochaffin/color-schemes#readme",
   "dependencies": {
-    "palette": "0.0.1"
+    "express": "^4.14.0",
+    "palette": "git+https://github.com/nikochaffin/palette.git"
   }
 }
