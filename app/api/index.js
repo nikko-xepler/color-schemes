@@ -116,6 +116,10 @@ controller.image = function(req, res) {
     if (images[i].split('.')[0] == imageName) {
       // return res.sendFile(path.join(process.cwd(), 'examples', images[i]));
 
+      if (req.query.hasOwnProperty('picture')) {
+        return res.sendFile(path.join(process.cwd(), 'examples', images[i]))
+      }
+
       var canvas = new Canvas;
       var ctx = canvas.getContext('2d')
       var img = new Image;
