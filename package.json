@@ -1,0 +1,29 @@
+{
+  "name": "color-schemes",
+  "version": "1.0.0",
+  "description": "A node application for creating, editing, and exporting color schemes.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nikochaffin/color-schemes.git"
+  },
+  "keywords": [
+    "color",
+    "scheme",
+    "theme",
+    "design",
+    "picker"
+  ],
+  "author": "Niko Chaffin",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/nikochaffin/color-schemes/issues"
+  },
+  "homepage": "https://github.com/nikochaffin/color-schemes#readme",
+  "dependencies": {
+    "palette": "0.0.1"
+  }
+}
