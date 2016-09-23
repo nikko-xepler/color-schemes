@@ -5,86 +5,19 @@ var palette = require('palette');
 var Canvas = require('canvas');
 var Image = Canvas.Image;
 
+var rgb = require('color-space/rgb');
+var hsl = require('color-space/hsl');
+var lab = require('color-space/lab');
+var xyz = require('color-space/xyz');
+var luv = require('color-space/luv');
+var lchuv = require('color-space/lchuv');
+
+var DeltaE = require('delta-e');
+
 var routes = express.Router();
 var controller = {};
 
 var images = fs.readdirSync('./examples');
-
-controller.index = function(req, res) {
-  res.send("Core api for color-schemes");
-};
-
-/**
- * Converts an HSL color value to RGB. Conversion formula
- * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
- * Assumes h, s, and l are contained in the set [0, 1] and
- * returns r, g, and b in the set [0, 255].
- *
- * @param   {number}  h       The hue
- * @param   {number}  s       The saturation
- * @param   {number}  l       The lightness
- * @return  {Array}           The RGB representation
- *
- * @source http://stackoverflow.com/questions/2353211/hsl-to-rgb-color-conversion
- */
-function hslToRgb(h, s, l){
-    var r, g, b;
-
-    if(s == 0){
-        r = g = b = l; // achromatic
-    }else{
-        var hue2rgb = function hue2rgb(p, q, t){
-            if(t < 0) t += 1;
-            if(t > 1) t -= 1;
-            if(t < 1/6) return p + (q - p) * 6 * t;
-            if(t < 1/2) return q;
-            if(t < 2/3) return p + (q - p) * (2/3 - t) * 6;
-            return p;
-        }
-
-        var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-        var p = 2 * l - q;
-        r = hue2rgb(p, q, h + 1/3);
-        g = hue2rgb(p, q, h);
-        b = hue2rgb(p, q, h - 1/3);
-    }
-
-    return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
-}
-
-/**
- * Converts an RGB color value to HSL. Conversion formula
- * adapted from http://en.wikipedia.org/wiki/HSL_color_space.
- * Assumes r, g, and b are contained in the set [0, 255] and
- * returns h, s, and l in the set [0, 1].
- *
- * @param   {number}  r       The red color value
- * @param   {number}  g       The green color value
- * @param   {number}  b       The blue color value
- * @return  {Array}           The HSL representation
- *
- * @source http://stackoverflow.com/questions/2353211/hsl-to-rgb-color-conversion
- */
-function rgbToHsl(r, g, b){
-    r /= 255, g /= 255, b /= 255;
-    var max = Math.max(r, g, b), min = Math.min(r, g, b);
-    var h, s, l = (max + min) / 2;
-
-    if(max == min){
-        h = s = 0; // achromatic
-    }else{
-        var d = max - min;
-        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-        switch(max){
-            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-            case g: h = (b - r) / d + 2; break;
-            case b: h = (r - g) / d + 4; break;
-        }
-        h /= 6;
-    }
-
-    return [h, s, l];
-}
 
 function decimalToHex(decimal, digits) {
   digits = digits || 2;
@@ -107,6 +40,44 @@ function rgbToHexColor(rgbColor) {
   var string = '#' + hexColor.join('');
   return string;
 }
+
+// e.g. distanceFromColor([243, 123, 204], "red");
+function distanceFromColor(rgbColor, color) {
+  var colorIndexes = ["red", "green", "blue"];
+  var i = colorIndexes.indexOf(color);
+  var i_others = [0, 1, 2].filter(function(item) { return item != i });
+  var dist1 = (rgbColor[i] - rgbColor[i_others[0]]);
+  var dist2 = (rgbColor[i] - rgbColor[i_others[1]]);
+  return dist1 + dist2;
+}
+
+function labArrayToObject(labColor) {
+  var LABindexes = ["L", "A", "B"];
+  var output = {};
+  for (i=0; i<LABindexes.length; i++) {
+    output[LABindexes[i]] = labColor[i];
+  }
+  return output;
+}
+
+function deltaDistanceFromColor(rgbColor, color) {
+  var colorIndexes = ["red", "green", "blue"];
+  var i = colorIndexes.indexOf(color);
+  var maxColor = [255 * (i==0), 255 * (i==1), 255 * (i==2)];
+  maxColor = labArrayToObject(xyz.lab(rgb.xyz(maxColor)));
+  rgbColor = labArrayToObject(xyz.lab(rgb.xyz(rgbColor)));
+  return DeltaE.getDeltaE00(rgbColor, maxColor);
+}
+
+// function distanceWithChroma(rgbColor, color) {
+//   var dist = distanceFromColor(rgbColor, color);
+//   var chroma = xyz.lchuv(rgb.xyz(rgbColor))[1];
+//   return dist + chroma;
+// }
+
+controller.index = function(req, res) {
+  res.send("Core api for color-schemes");
+};
 
 controller.image = function(req, res) {
   var imageName = req.params.image;
@@ -140,27 +111,46 @@ controller.image = function(req, res) {
         switch (req.query.sortby) {
           case "hue":
             colors.sort(function(a, b) {
-              ha = rgbToHsl(a[0], a[1], a[2])[0];
-              hb = rgbToHsl(b[0], b[1], b[2])[0];
+              ha = xyz.lchuv(rgb.xyz(a))[2];
+              hb = xyz.lchuv(rgb.xyz(b))[2];
               // Treat the lower hue as the "greater" item
               return 1 - ((ha < hb) * 2);
             })
             break;
           case "saturation":
             colors.sort(function(a, b) {
-              sa = rgbToHsl(a[0], a[1], a[2])[1];
-              sb = rgbToHsl(b[0], b[1], b[2])[1];
+              sa = rgb.hsl(a)[1];
+              sb = rgb.hsl(b)[1];
               // Treat the lower saturation as the "greater" item
               return 1 - ((sa < sb) * 2);
             })
             break;
           case "lightness":
             colors.sort(function(a, b) {
-              la = rgbToHsl(a[0], a[1], a[2])[2];
-              lb = rgbToHsl(b[0], b[1], b[2])[2];
+              la = xyz.lchuv(rgb.xyz(a))[0];
+              lb = xyz.lchuv(rgb.xyz(b))[0];
               // Treat the higher lightness as the "greater" item
               return 1 - ((la > lb) * 2);
             })
+            break;
+          case "chroma":
+            colors.sort(function(a, b) {
+              la = xyz.lchuv(rgb.xyz(a))[1];
+              lb = xyz.lchuv(rgb.xyz(b))[1];
+              // Treat the lower chroma as the "greater" item
+              return 1 - ((la < lb) * 2);
+            })
+            break;
+          case "red":
+          case "green":
+          case "blue":
+            colors.sort(function(a, b) {
+              if (req.query.hasOwnProperty('deltae')) {
+                return 1 - ((deltaDistanceFromColor(a, req.query.sortby) < deltaDistanceFromColor(b, req.query.sortby)) * 2);
+              } else {
+                return 1 - ((distanceFromColor(a, req.query.sortby) > distanceFromColor(b, req.query.sortby)) * 2);
+              }
+            });
             break;
           default:
 
@@ -181,17 +171,50 @@ controller.image = function(req, res) {
       if (req.query.hasOwnProperty('blocks')) {
         var blocks = [];
         for (var i=0; i<hexColors.length; i++) {
-          blocks.push('<div style="display:inline-block;width:100px;height:100px;background:' + hexColors[i] + ';"></div>');
+
+          var detailBlock = '';
+
+          if (req.query.blocks == "detailed") {
+            var xyzColor = rgb.xyz(colors[i]);
+            var labColor = xyz.lab(xyzColor);
+            var luvColor = xyz.luv(xyzColor);
+            var lchuvColor = luv.lchuv(luvColor);
+            detailBlock = '<div style="padding:5px 10px;">' +
+              '<code>HEX: ' + hexColors[i] + '</code><br>' +
+              '<code>RGB: [' + colors[i].join(', ') + ']</code><br>' +
+              '<code>LAB: [' + labColor.join(', ') + ']</code><br>' +
+              '<code>LUV: [' + luvColor.join(', ') + ']</code><br>' +
+              '<code>LCH<sub>UV</sub>: [' + lchuvColor.join(', ') + ']</code>' +
+            '</div>'
+          }
+
+          blocks.push('<div style="display:inline-block;width:' + (detailBlock ? 600 : 200) +
+          'px;padding:2px;box-shadow:0 1px 4px rgba(0,0,0,0.2);margin-right:10px;margin-bottom:10px;">' +
+            '<div style="height:200px;background:' + hexColors[i] + ';"></div>' +
+            detailBlock +
+          '</div>');
         }
-        return res.send(blocks.join(' '))
+
+        return res.send(blocks.join(' '));
+
+      } else if (req.query.hasOwnProperty('gradient')) {
+        var stops = [];
+
+        for (var i=0; i<hexColors.length; i++) {
+          stops.push(hexColors[i] + ' ' + ((i / (hexColors.length - 1)) * 100) + '%');
+        }
+
+        return res.send(
+          '<body style="margin:0;">' +
+            '<div style="height:100vh;width:100vw;margin:0;background:linear-gradient(to right, ' +
+              stops.join(', ') +
+            ');"></div>' +
+          '</body>'
+        );
+
       } else {
         return res.json(hexColors);
       }
-
-      // var img = fs.readFileSync(imgPath);
-      // res.send(new Buffer(img).toString('base64'));
-
-      // return res.sendFile(path.join(process.cwd(), 'examples', images[i]));
     }
   }
 
