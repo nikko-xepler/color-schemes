@@ -34,7 +34,7 @@ nf run node index.js
 
 ## Future Todos
 
-- [x] Include either [colorspaces.js](https://github.com/boronine/colorspaces.js) or [color-space](https://github.com/scijs/color-space)
+- [x] Include ~~either [colorspaces.js](https://github.com/boronine/colorspaces.js) or~~ [color-space](https://github.com/scijs/color-space)
   - More human-friendly filtering and sorting
   - Better measurement of contrast for accessibility
 - [ ] Set up a schema for storing colors and/or sets of colors
