@@ -27,6 +27,7 @@
     "color-space": "^1.14.6",
     "delta-e": "0.0.7",
     "express": "^4.14.0",
-    "palette": "^0.1.0"
+    "mongoose": "^4.6.1",
+    "palette": "^0.1.1"
   }
 }
