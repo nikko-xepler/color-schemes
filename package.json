@@ -27,6 +27,6 @@
     "color-space": "^1.14.6",
     "delta-e": "0.0.7",
     "express": "^4.14.0",
-    "palette": "git+https://github.com/nikochaffin/palette.git"
+    "palette": "^0.1.0"
   }
 }
