@@ -35,6 +35,7 @@ function hexToRgbColor(hexColor) {
     var val;
     var val = parseInt(hexColor[i] + hexColor[i+1], 16);
     rgbColor.push(val);
+    i++;
   }
   return rgbColor;
 }
