@@ -1,5 +1,5 @@
 var express = require('express');
-var controller = require('./colors.controller');
+var controller = require('./schemes.controller')
 
 var routes = express.Router();
 

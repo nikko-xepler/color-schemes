@@ -1,5 +1,5 @@
 var Color = require('../../../models/color');
-var getErrorMessages = require('../../../helpers/getErrorMessages')
+var getErrorMessages = require('../../../helpers/getErrorMessages');
 var getColorParamsFrom = require('../../../helpers/getColorParamsFrom');
 
 module.exports.index = function(req, res) {
@@ -9,7 +9,7 @@ module.exports.index = function(req, res) {
   })
   .catch(function(err) {
     console.log(err);
-    return res.status(400).send("An error occurred.")
+    return res.status(400).send("An error occurred.");
   });
 }
 
