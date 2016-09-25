@@ -14,16 +14,25 @@ module.exports.index = function(req, res) {
 }
 
 module.exports.show = function(req, res) {
-  Color.findOne({ _id: req.params.id })
+  Color.findById(req.params.id)
   .then(function(color) {
     return res.json(color);
   })
   .catch(function(err) {
     console.log(err);
     return res.status(404).send("Color not found.");
-  });;
+  });
 }
 
+module.exports.count = function(req, res) {
+  Color.count()
+  .then(function(number) {
+    return res.json(number);
+  })
+  .catch(function(err) {
+    return res.status(400).send("An error occurred.");
+  })
+}
 
 var colorSpaces = ["Hex", "RGB", "LAB", "LUV", "LCHUV"];
 
@@ -65,17 +74,56 @@ module.exports.create = function(req, res) {
 //   return createColorFromParams(params, req, res);
 // }
 
-function createColorFromParams(colorParams, req, res) {
-  Color.create(colorParams)
-  .then(function(color) {
+// function createColorFromParams(colorParams, req, res) {
+//   Color.create(colorParams)
+//   .then(function(color) {
+//     return res.json(color);
+//   })
+//   .catch(function(err) {
+//     console.log(err);
+//     if (err.errors) {
+//       return res.status(400).json({ errors: getErrorMessages(err) });
+//     } else {
+//       return res.status(400).send("An error occurred.");
+//     }
+//   });
+// }
+
+module.exports.update = function(req, res) {
+  var output = getColorParamsFrom("hex", req.body.hex);
+  Color.findAndUpdate(req.params.id, output)
+  .then(function(color){
     return res.json(color);
   })
-  .catch(function(err) {
-    console.log(err);
+  .catch(function(err){
     if (err.errors) {
+      // console.log(output);
+      console.log(err.errors);
       return res.status(400).json({ errors: getErrorMessages(err) });
     } else {
       return res.status(400).send("An error occurred.");
     }
   });
+}
+
+module.exports.delete = function(req, res) {
+  Color.findById(req.params.id)
+  .then(function(color){
+    color.remove()
+    .then(function(){
+      return res.send("Color removed.");
+    })
+    .catch(function(err){
+      if (err.errors) {
+        // console.log(output);
+        console.log(err.errors);
+        return res.status(400).json({ errors: getErrorMessages(err) });
+      } else {
+        return res.status(400).send("An error occurred.");
+      }
+    })
+  })
+  .catch(function(err){
+    return res.status(404).send("Color not found");
+  })
 }

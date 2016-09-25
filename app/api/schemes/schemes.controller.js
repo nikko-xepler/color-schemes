@@ -27,6 +27,16 @@ module.exports.show = function(req, res) {
   });
 }
 
+module.exports.count = function(req, res) {
+  Scheme.count()
+  .then(function(number) {
+    return res.json(number);
+  })
+  .catch(function(err) {
+    return res.status(400).send("An error occurred.");
+  })
+}
+
 
 function handleError(err, res) {
   if (err.errors) {
