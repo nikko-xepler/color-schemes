@@ -90,3 +90,73 @@ module.exports.create = function(req, res) {
     });
   }
 }
+
+module.exports.update = function(req, res) {
+  Scheme.findById(req.params.id)
+  .then(function(scheme){
+    var colors = req.body.colors;
+    var colorsToCreate = [];
+    for (var i=0; i<colors.length; i++) {
+      if (colors[i].hasOwnProperty && colors[i].hasOwnProperty('hex')) {
+        colors[i] = getColorParamsFrom("hex", colors[i].hex);
+        colorsToCreate.push(colors.splice(i, 1)[0]);
+        i--;
+      }
+    }
+    console.log(colorsToCreate);
+    if (colorsToCreate.length > 0) {
+      Color.create(colorsToCreate)
+      .then(function(createdColors) {
+        createdColors.map(function(item){ colors.push(item._id) });
+        console.log("finished creating colors:", createdColors);
+        scheme.colors = colors;
+        scheme.save()
+        .then(function(scheme){
+          console.log("sending response...");
+          return res.json(scheme);
+        })
+        .catch(function(err){
+          return handleError(err, res);
+        });
+      })
+      .catch(function(err){
+        return handleError(err, res);
+      });
+    } else {
+      scheme.colors = colors;
+      scheme.save()
+      .then(function(scheme){
+        console.log("sending response...");
+        return res.json(scheme);
+      })
+      .catch(function(err){
+        return handleError(err, res);
+      });
+    }
+  })
+  .catch(function(err){
+    return res.status(404).send("Scheme not found.");
+  });
+}
+
+module.exports.delete = function(req, res) {
+  Scheme.findById(req.params.id)
+  .then(function(scheme){
+    scheme.remove()
+    .then(function(){
+      return res.send("Scheme removed.");
+    })
+    .catch(function(err){
+      if (err.errors) {
+        // console.log(output);
+        console.log(err.errors);
+        return res.status(400).json({ errors: getErrorMessages(err) });
+      } else {
+        return res.status(400).send("An error occurred.");
+      }
+    })
+  })
+  .catch(function(err){
+    return res.status(404).send("Scheme not found");
+  })
+}
