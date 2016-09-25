@@ -10,6 +10,11 @@ var schemeSchema = new Schema({
   }
 });
 
+schemeSchema.pre('save', function(next){
+  this.colorsCount = this.colors.length;
+  next();
+});
+
 var Scheme = mongoose.model('Scheme', schemeSchema);
 
 module.exports = Scheme;

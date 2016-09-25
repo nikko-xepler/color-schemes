@@ -44,6 +44,7 @@ module.exports.create = function(req, res) {
     if (colors[i].hasOwnProperty && colors[i].hasOwnProperty('hex')) {
       colors[i] = getColorParamsFrom("hex", colors[i].hex);
       colorsToCreate.push(colors.splice(i, 1)[0]);
+      i--;
     }
   }
   console.log(colorsToCreate);
