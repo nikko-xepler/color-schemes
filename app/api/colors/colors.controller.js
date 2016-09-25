@@ -41,6 +41,7 @@ module.exports.create = function(req, res) {
   })
   .catch(function(err){
     if (err.errors) {
+      // console.log(output);
       console.log(err.errors);
       return res.status(400).json({ errors: getErrorMessages(err) });
     } else {

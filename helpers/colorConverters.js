@@ -31,8 +31,7 @@ function hexToRgbColor(hexColor) {
   if (hexColor.length == 3) {
     hexColor = fillHex(hexColor);
   }
-  for (var i=0; i<3; i++) {
-    var val;
+  for (var i=0; i<6; i++) {
     var val = parseInt(hexColor[i] + hexColor[i+1], 16);
     rgbColor.push(val);
     i++;
