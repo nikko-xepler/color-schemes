@@ -1,29 +1,28 @@
-var Scheme = require('../../../models/scheme');
-var Color = require('../../../models/color');
+var mongoose = require('mongoose');
+var assert = require('assert');
+var Scheme = require('../../../models/scheme').model;
+var Promise = require('bluebird');
 var getErrorMessages = require('../../../helpers/getErrorMessages');
 var getColorParamsFrom = require('../../../helpers/getColorParamsFrom');
 
 module.exports.index = function(req, res) {
   Scheme.find()
-  .populate('colors')
   .then(function(results){
     return res.json(results);
   })
   .catch(function(err){
-    console.log(err);
-    return res.status(400).send("An error occurred.");
+    return handleError(err, res);
   });
 }
 
 module.exports.show = function(req, res) {
   Scheme.findOne({ _id: req.params.id })
-  .populate('colors')
+  .populate('colors', 'hex rgb')
   .then(function(scheme){
     return res.json(scheme);
   })
   .catch(function(err){
-    console.log(err);
-    return res.status(404).send("No color scheme found.");
+    return handleError(err, res);
   });
 }
 
@@ -33,7 +32,7 @@ module.exports.count = function(req, res) {
     return res.json(number);
   })
   .catch(function(err) {
-    return res.status(400).send("An error occurred.");
+    return handleError(err, res);
   })
 }
 
@@ -43,120 +42,66 @@ function handleError(err, res) {
     console.log(err.errors);
     return res.status(400).json({ errors: getErrorMessages(err) });
   } else {
+    console.log(err);
     return res.status(400).send("An error occurred.");
   }
 }
 
-module.exports.create = function(req, res) {
-  var colors = req.body.colors;
-  var colorsToCreate = [];
-  for (var i=0; i<colors.length; i++) {
-    if (colors[i].hasOwnProperty && colors[i].hasOwnProperty('hex')) {
-      colors[i] = getColorParamsFrom("hex", colors[i].hex);
-      colorsToCreate.push(colors.splice(i, 1)[0]);
+function updateColorParams(colors) {
+  for (var i = 0; i < colors.length; i++) {
+    var color = colors[i];
+    if (color.hex) {
+      colors[i] = getColorParamsFrom('hex', color.hex, color._id);
+    } else {
+      colors.splice(i, 1);
       i--;
     }
   }
-  console.log(colorsToCreate);
-  if (colorsToCreate.length > 0) {
-    Color.create(colorsToCreate)
-    .then(function(createdColors) {
-      createdColors.map(function(item){ colors.push(item._id) });
-      console.log("finished creating colors:", createdColors);
-      Scheme.create({
-        colors: colors
-      })
-      .then(function(scheme){
-        console.log("sending response...");
-        return res.json(scheme);
-      })
-      .catch(function(err){
-        return handleError(err, res);
-      });
-    })
-    .catch(function(err){
-      return handleError(err, res);
-    });
-  } else {
-    Scheme.create({
-      colors: colors
-    })
-    .then(function(scheme){
-      console.log("sending response...");
-      return res.json(scheme);
-    })
-    .catch(function(err){
-      return handleError(err, res);
-    });
-  }
+  return colors
+}
+
+module.exports.create = function(req, res) {
+  var obj = req.body;
+  obj.colors = updateColorParams(obj.colors);
+  // console.log(req.body.colors);
+  Scheme.create(req.body)
+  .then(function(result) {
+    return res.json(result);
+  })
+  .catch(function(err) {
+    return handleError(err, res);
+  });
 }
 
 module.exports.update = function(req, res) {
-  Scheme.findById(req.params.id)
-  .then(function(scheme){
-    var colors = req.body.colors;
-    var colorsToCreate = [];
-    for (var i=0; i<colors.length; i++) {
-      if (colors[i].hasOwnProperty && colors[i].hasOwnProperty('hex')) {
-        colors[i] = getColorParamsFrom("hex", colors[i].hex);
-        colorsToCreate.push(colors.splice(i, 1)[0]);
-        i--;
-      }
-    }
-    console.log(colorsToCreate);
-    if (colorsToCreate.length > 0) {
-      Color.create(colorsToCreate)
-      .then(function(createdColors) {
-        createdColors.map(function(item){ colors.push(item._id) });
-        console.log("finished creating colors:", createdColors);
-        scheme.colors = colors;
-        scheme.save()
-        .then(function(scheme){
-          console.log("sending response...");
-          return res.json(scheme);
-        })
-        .catch(function(err){
-          return handleError(err, res);
-        });
-      })
-      .catch(function(err){
-        return handleError(err, res);
-      });
-    } else {
-      scheme.colors = colors;
-      scheme.save()
-      .then(function(scheme){
-        console.log("sending response...");
-        return res.json(scheme);
-      })
-      .catch(function(err){
-        return handleError(err, res);
-      });
-    }
+  req.body.colors = updateColorParams(req.body.colors);
+  var id = req.params.id || req.body.id;
+  var obj = req.body;
+  delete obj._id;
+  Scheme.findOneAndUpdate(
+    {_id: id},
+    obj,
+    { new: true }
+  )
+  .then(function(scheme) {
+    return res.json(scheme);
   })
-  .catch(function(err){
-    return res.status(404).send("Scheme not found.");
+  .catch(function(err) {
+    return handleError(err, res);
   });
 }
 
 module.exports.delete = function(req, res) {
+  console.log(req.params.id);
   Scheme.findById(req.params.id)
   .then(function(scheme){
-    scheme.remove()
-    .then(function(){
-      return res.send("Scheme removed.");
-    })
-    .catch(function(err){
-      if (err.errors) {
-        // console.log(output);
-        console.log(err.errors);
-        return res.status(400).json({ errors: getErrorMessages(err) });
-      } else {
-        return res.status(400).send("An error occurred.");
-      }
-    })
+    console.log(scheme);
+    return scheme.remove()
+  })
+  .then(function(){
+    return res.send("Scheme removed.");
   })
   .catch(function(err){
-    return res.status(404).send("Scheme not found");
-  })
+    return handleError(err, res);
+  });
 }

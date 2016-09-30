@@ -38,10 +38,16 @@ var colorSchema = new Schema({
       message: validators.invalidLError
     }
   },
+  // schemeId: {
+  //   type: mongoose.Schema.Types.ObjectId,
+  //   ref: 'Scheme',
+  //   default: null,
+  // }
 }, {
   autoIndexId: true,
 });
 
 var Color = mongoose.model('Color', colorSchema);
 
-module.exports = Color;
+module.exports.schema = colorSchema;
+module.exports.model = Color;

@@ -1,9 +1,10 @@
-var Color = require('../../../models/color');
+var Color = require('../../../models/color').model;
 var getErrorMessages = require('../../../helpers/getErrorMessages');
 var getColorParamsFrom = require('../../../helpers/getColorParamsFrom');
 
 module.exports.index = function(req, res) {
   Color.find()
+  .select('hex rgb')
   .then(function(results) {
     return res.json(results);
   })

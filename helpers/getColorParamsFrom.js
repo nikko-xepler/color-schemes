@@ -10,7 +10,7 @@ function setAllFromHex(hexColor) {
   return output;
 }
 
-module.exports = function(key, value) {
+module.exports = function(key, value, id) {
   var params = {};
   var hex;
   console.log(key, value);
@@ -34,5 +34,8 @@ module.exports = function(key, value) {
   }
 
   params = setAllFromHex(hex);
+  if (id) {
+    params._id = id;
+  }
   return params;
 }
