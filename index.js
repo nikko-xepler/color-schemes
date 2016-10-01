@@ -2,6 +2,7 @@ var express = require('express');
 var app = express();
 
 var assert = require('assert');
+var path = require('path');
 var fs = require('fs');
 var mongoose = require('mongoose');
 var bodyParser = require('body-parser');
@@ -59,6 +60,13 @@ for (var i=0;i<apiFolders.length;i++) {
 var apiRoute = require('./app/api/index');
 
 app.use('/api', apiRoute);
+
+// Serve content from the `client` folder as static content
+app.use(express.static(path.join(__dirname, 'app/client')));
+app.use(express.static(path.join(__dirname, 'bower_components')));
+app.use('/', function(res, req){
+  return res.sendFile('./app/client/index.html');
+})
 
 app.listen(port);
 console.log("Listening on http://localhost:" + port + "...\n");
